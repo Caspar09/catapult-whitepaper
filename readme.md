@@ -1,14 +1,9 @@
-Catapult whitepaper repository
+投石车白皮书中文版仓库
+
 ==============================
 
-In math and text mode:
- * Use `\nemsetting` to refer to configuration variables
+本分支创建于2020年1月2日，用于翻译和同步来自nemtech/catapult-whitepaper主分支的更新。
 
-In math mode:
- * Use `\mathfunc` to mark multi-letter functions, i.e. `\func{verify}(a, b, c)`
- * Use `\structField` to refer to cpp fields inside math mode, i.e. `\fieldTwo{X}{SomeField}`, right now, X should be single letter
- * Use `\mathit` to refer to multi-letter, but single word variables
- * Use `\textit` to refer to multi word variables
+目前翻译进度为Chapter 2 系统 - 服务器
 
-In text mode:
- * Use `\field` to refer to cpp field names.
+目前同步到主分支的日期为2020年1月7日
