@@ -135,15 +135,15 @@ void RegisterExtension(
 		When \nemsetting{user}{enableDelegatedHarvestersAutoDetection} is set, this directory will contain extracted delegated harvesting requests for the current node.
 	}
 	\item{\filepath{commit\_step.dat} -
-		Stores the most recent step of the commit process initiated by the server.
+		This stores the most recent step of the commit process initiated by the server.
 		This is primarily used for recovery purposes.
 	}
-	\item{\filepath{index.dat} - Counter that contains the number of blocks stored on disk.}
+	\item{\filepath{index.dat} - This is a counter that contains the number of blocks stored on disk.}
 \end{enumerate}
 
 \subsubsection{Cache Database}
 
-The server supports running both with and without a cache database.
+The server can run with or without a cache database.
 When \nemsetting{node}{enableCacheDatabaseStorage} is set, RocksDB is used to store cache data.
 Verifiable state \nemrefparens{sec:blocks:statehash} requires a cache database and most network configurations are expected to have it enabled.
 
@@ -183,8 +183,8 @@ The server writes messages and the broker reads them.
 There is no way for the broker to send messages to the server.
 This decoupling is intentional and was done for performance reasons.
 
-The server raises subscription events in the block chain sync consumer \nemrefparens{sec:disruptor:blockConsumers} when it holds an exclusive lock to the blockchain data.
-In order to prevent slow database operations from occurring when the server has an exclusive lock, these operations are offloaded to the broker.
+The server raises subscription events in the blockchain sync consumer \nemrefparens{sec:disruptor:blockConsumers} when it holds an exclusive lock to the blockchain data.
+These operations are offloaded to the broker to prevent slow database operations when the server has an exclusive lock.
 The server overhead is minimal because most of the data used by the broker is also required to recover data after an ungraceful server termination.
 
 \subsection{Recovery}
@@ -207,7 +207,7 @@ Other files indicating the presence of an ungraceful termination are updated or 
 
 \subsection{Common Topologies}
 
-Although a network can be composed of a large number of heterogeneous topologies, it is likely that most nodes will fall into one of three categories: Peer, Api or Dual.
+Although a network can be composed of a large number of heterogeneous topologies, it is likely that most nodes will fall into one of three categories: Peer, API or Dual.
 The same server process is used across all of these topologies.
 The only difference is in what extensions each loads.
 
@@ -215,12 +215,12 @@ Peer nodes are lightweight nodes.
 They have enough functionality to add security to the blockchain network, but little beyond that.
 They can synchronize with other nodes and harvest new blocks.
 
-Api nodes are more heavyweight nodes.
+API nodes are more heavyweight nodes.
 They can synchronize with other nodes, but cannot harvest new blocks.
 They support hosting bonded aggregate transactions and collecting cosignatures to complete them.
-They require a broker process, which is configured to persist data into a MongoDB database and propagate changes over public message queues to subscribers.
-The REST Api is dependent on both of these capabilities and is typically co-located with an Api node for performance reasons in order to minimize latency.
+They require a broker process, which is configured to write data into a MongoDB database and propagate changes over public message queues to subscribers.
+The REST API is dependent on both of these capabilities and is typically co-located with an Api node for performance reasons in order to minimize latency.
 
-Dual nodes are simply a superset of Peer and Api nodes.
+Dual nodes are simply a superset of Peer and API nodes.
 They support all capabilities of both node types.
-Since these nodes support all Api node capabilities, they also require a broker.
+Since these nodes support all API node capabilities, they also require a broker.
