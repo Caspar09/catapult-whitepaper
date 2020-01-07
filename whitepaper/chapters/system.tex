@@ -1,24 +1,26 @@
-\section{System}
+\section{系统}
 \label{sec:system}
 
 \nemquote{
 }{}
 
-\nemchapterfirstletter{H}{igh} degrees of customization are supported by \codenamespace at both the network level and the individual node level.
-Network wide settings specified in \nemsetting{network}{network} must be the same for all nodes in a network.
-Node specific settings specified in \nemsetting{node}{node} can vary across nodes in the same network.
 
-\subsection{Transaction Plugins}
+\codenamespace在网络级别和单个节点级别都支持高度的自定义。
+\nemsetting {network} {network}中指定的网络范围设置对于网络中的所有节点必须相同。
+\nemsetting {node} {node}中指定的特定于节点的设置在同一网络中的各个节点之间可能会有所不同。
 
-All nodes in a network must support the same types of transactions and process them in exactly the same manner so that all nodes can agree on the global blockchain state.
-The transactions a network supports are determined by the set of \textit{transaction plugins} the network requires each node to load.
-This set is determined by the presence of \nemsetting{network}{plugin*} sections in the configuration.
-Any changes, additions or deletions of these plugins must be coordinated and accepted by all network nodes.
-If only a subset of nodes agree to these modifications, those nodes will be on a fork.
-All built-in \codenamespace transactions are built using this plugin model in order to validate its extensibility.
+\subsection{事务插件}
 
-A plugin is a separate dynamically linked library that exposes a single entry point in the following form
-\footnote{Format of plugins depends on target operating system and compiler used, so all host applications and plugins must be built with the same compiler version and options.}:
+
+网络中的所有节点必须支持相同类型的事务，并以完全相同的方式处理它们，以便所有节点可以就全局区块链状态达成共识。
+网络事务由一组网络需要每个节点都需要加载的\textit{事务插件} 来支持。
+这个（事务插件）组是由存在\nemsetting{network}{plugin*}配置部分。
+这些插件的任何更改，添加或删除必须由所有网络节点协调并接受。
+如果仅节点的部分子集同意这些修改，则这些节点将在分叉上。
+\codenamespace所有内置的事务都使用此插件模型构建，以验证其可扩展性。
+
+插件是一个单独的动态链接库，它以以下形式开放单个接口
+\footnote{插件的格式取决于目标操作系统和使用的编译器，因此所有主机应用程序和插件必须使用相同的编译器版本和选项构建。}:
 
 \begin{lstlisting}
 extern "C" PLUGIN_API
@@ -26,95 +28,96 @@ void RegisterSubsystem(
 	catapult::plugins::PluginManager& manager);
 \end{lstlisting}
 
-\class{PluginManager} provides access to the subset of configuration that plugins need to initialize themselves.
-Through this class, a plugin can register zero or more of the following:
+\class{PluginManager} 类提供对插件初始化所需的配置子集的访问。
+通过这个类，插件可以注册以下零个或多个：
 
 \begin{enumerate}
-	\item{Transactions -
-		New transaction types and the mapping of those types to parsing rules can be specified.
-		Specifically, the plugin defines rules for translating a transaction into component notifications that are used in further processing.
-		A handful of processing constraints can also be specified, such as indicating a transaction can only appear within an aggregate transaction \nemrefparens{sec:transactions:aggregate}.
+	\item{事务(Transaction) -
+		可以指定新的事务类型以及这些类型到解析规则的映射。
+		具体来说，该插件定义了将交易转换为组件通知的规则，这些通知将在进一步处理中使用。
+		还可以指定一些处理约束，例如指示事务只能出现在聚合事务中\nemrefparens{sec:transactions:aggregate}。
 	}
-	\item{Caches -
-		New cache types and rules for serializing and deserializing model types to and from binary can be specified.
-		Each state-related cache can optionally be included in the calculation of a block's \field{StateHash} \nemrefparens{sec:blocks:statehash} when that feature is enabled.
+	\item{缓存(Caches) -
+		可以指定新的缓存类型和规则，以将模型类型与二进制进行序列化和反序列化。
+		启用该功能后，可以选择将每个与状态相关的缓存包括在块的\field{StateHash}\nemrefparens{sec:blocks:statehash}的计算中。
 	}
-	\item{Handlers - APIs that are always accessible.}
-	\item{Diagnostics - APIs and counters that are accessible only when the node is running in diagnostic mode.}
-	\item{Validators -
-		Stateless and stateful validators that process the notifications produced by block and transaction processing.
-		The registered validators can subscribe to general or plugin-defined notifications and reject disallowed values or state changes.
+	\item{联络程序(Handlers) - 总是可以访问的APIs。}
+	\item{诊断器(Diagnostics) - 仅当节点以诊断方式运行时才可访问的API和计数器。}
+	\item{验证器(Validators) -
+		无状态和有状态验证器，用于处理由区块和事务处理产生的通知。
+		经过注册的验证器可以订阅常规或插件定义的通知，并拒绝不允许的值或状态更改。	
 	}
-	\item{Observers -
-		Observers that process the notifications produced by block and transaction processing.
-		The registered observers can subscribe to general or plugin-defined notifications and update blockchain state based on their values.
-		Observers don't require any validation logic because they are only called after all applicable validators succeed.
+	\item{监察器(Observers) -
+		监察器处理由区块和事务处理产生的通知。
+		经过注册的监察器可以订阅常规或插件定义的通知，并根据其值更新区块链状态。
+		监察器不需要任何验证逻辑，因为只有在所有适用的验证者成功之后才调用监察器。
 	}
-	\item{Resolvers -
-		Custom mappings from unresolved to resolved types can be specified.
-		For example, this is used by the namespace plugin to add support for alias resolutions.
+	\item{解析器(Resolvers) -
+		可以指定从未解析类型到已解析类型的自定义映射。
+		例如，名称空间插件使用它来添加对别名（Alias）解析的支持。
 	}
 \end{enumerate}
 
-\subsection{\codenamespace Extensions}
+\subsection{\codenamespace 扩展}
 \label{sec:system:extensions}
 
-Individual nodes within a network are allowed to support a heterogeneous mix of capabilities.
-For example, some nodes might want to store data in a database or publish events to a message queue.
-These capabilities are all optional because none of them impact consensus.
-Such capabilities are determined by the set of \textit{extensions} a node loads as specified in \nemsetting{extensions-\{process\}}{extensions}.
-Most built-in \codenamespace functionality is built using this extension model in order to validate its extensibility.
+允许网络内的各个节点支持功能的异构混合。
+例如，某些节点可能希望将数据存储在数据库中或将事件发布到消息队列。
+这些功能都是可选的，因为它们都不影响共识。
+此类功能由节点加载的\textit{extensions}集确定，如\nemsetting{extensions-\{process\}}{extensions}中指定的那样。
+大多数内置\codenamespace功能是使用此扩展模型构建的，以验证其可扩展性。
 
-An extension is a separate dynamically linked library that exposes a single entry point in the following form
-\footnote{Format of extensions depends on target operating system and compiler used, so all host applications and plugins must be built with the same compiler version and options.}:
+扩展是一个单独的动态链接库，它以以下形式开放单个接口
+\footnote{扩展的格式取决于目标操作系统和所使用的编译器，因此所有主机应用程序和插件必须使用相同的编译器版本和选项来构建。}：
 
 \begin{lstlisting}
 extern "C" PLUGIN_API
 void RegisterExtension(
-	catapult::extensions::ProcessBootstrapper& bootstrapper);
+	catapult::extensions::ProcessBootstrapper& 
+	bootstrapper);
 \end{lstlisting}
 
-\class{ProcessBootstrapper} provides access to full \codenamespace configuration and services that extensions need to initialize themselves.
-Providing this additional access allows extensions to be more powerful than plugins.
-Through this class, an extension can register zero or more of the following:
+\class{ProcessBootstrapper} 类提供对扩展名自行初始化的完整\codenamespace配置和服务的访问。
+提供此附加访问权限使扩展比插件更强大。
+通过此类，扩展可以注册以下零个或多个：
 
 \begin{enumerate}
-	\item{Services -
-		A service represents an independent behavior.
-		Services are passed an object representing the executable's state and can use it to configure a multitude of things.
-		Among others, a service can add diagnostic counters, define APIs (both diagnostic and non-diagnostic) and add tasks to the task scheduler.
-		It can also create dependent services and tie their lifetimes to that of the hosting executable.
-		There are very few limitations on what a service can do, which allows the potential for significant customizations.
+	\item{服务(Services) -
+		服务代表独立的行为。
+		服务传递了一个表示可执行文件状态的对象，并且可以使用它来配置多种事物。
+		服务尤其可以添加诊断计数器，定义API（诊断和非诊断API）并将任务添加到任务计划程序。
+		它还可以创建从属服务，并将其生存期与托管可执行文件的生存期相关联。
+		服务的功能几乎没有限制，这允许进行重大定制化开发。
 	}
-	\item{Subscriptions -
-		An extension can subscribe to any supported blockchain event.
-		Events are raised when changes are detected.
-		Block, state, unconfirmed transaction and partial transaction change events are supported.
-		Transaction status events are raised when the processing of a transaction completes.
-		Node events are raised when remote nodes are discovered.
+	\item{订阅(Subscriptions) -
+		扩展可以订阅任何受支持的区块链事件。
+		检测到更改时会引发事件。
+		支持阻止，状态，未确认的事务和部分事务更改事件。
+		事务处理完成时，将引发事务状态事件。
+		发现远程节点时会引发节点事件。
 	}
 \end{enumerate}
 
-In addition to the above, extensions can configure the node in more intricate ways.
-For example, an extension can register a custom network time supplier.
-In fact, there is a specialized extension that sets a time supplier based on algorithms described in \nemref{sec:timesync}.
-This is an example of the high levels of customization allowed by this extension model.
-For understanding the full range of extensibility allowed by extensions, please refer to the project code or developer documentation.
+除上述内容外，扩展还可以更复杂的方式配置节点。
+例如，分机可以注册自定义网络时间源。
+实际上，有一个专门的扩展程序可以根据\nemref{sec:timesync}中描述的算法建立时间源。
+这是此扩展模型允许的高级别定制的一个示例。
+要了解扩展所允许的全部扩展性，请参阅项目代码或开发人员文档。
 
-\subsection{Server}
+\subsection{服务器}
 
-The most simple catapult topology is composed of a single server executable.
-Transaction Plugins required by the network and \codenamespace Extensions desired by the node operator are loaded and initialized by the server.
+最简单的\codenamespace拓扑由单个服务器可执行文件组成。
+网络和\codenamespace所需的事务插件节点操作员所需的扩展由服务器加载和初始化。
 
-\codenamespace stores all of its data in a \filepath{data} directory.
-The contents of the data directory are as follows:
+\codenamespace 将其所有数据存储在 \filepath{data} 目录(directory)中。
+数据目录的内容如下：
 
 \begin{enumerate}
-	\item{Block Versioned Directories -
-		These directories contain block information in a proprietary format.
-		Each confirmed block's binary data, transactions and associated data are stored in these directories.
-		The statements \nemrefparens{sec:blocks:receipts} generated when processing each block are also stored here for quick access.
-		An example of a versioned directory is \filepath{00000}, which contains the first group of blocks.
+	\item{区块版本目录(Block Versioned Directories) -
+		这些目录包含专有格式的区块信息。
+		每个已确认区块的二进制数据，事务记录和相关数据都存储在这些目录中。
+		处理每个块时生成的语句 \nemrefparens{sec:blocks:receipts}也存储在此处以便快速访问。
+		版本化目录的一个示例是 \filepath{00000}，它包含第一组块。
 	}
 	\item{\filepath{audit} - Audit files created by the audit consumer \nemrefparens{sec:disruptor:commonConsumers} are stored in this directory.}
 	\item{\filepath{spool} -
