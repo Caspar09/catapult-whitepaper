@@ -6,14 +6,22 @@
 \input{header/commands}
 \input{header/chinesecommands}
 
-\makeindex
+\makeindex[intoc]
 \renewcommand{\contentsname}{目录}
 
 \begin{document}
+\pagenumbering{roman}
+
+	\phantomsection\pdfbookmark[section]{\codename}{titlepage}
+
 \begin{CJK}{UTF8}{gbsn}
 	\begin{titlepage}
 	\maketitle
 	\end{titlepage}
+	\phantomsection\pdfbookmark[section]{\contentsname}{toc}
+
+	\pagestyle{empty}
+	\setcounter{page}{2}
 
 	\begin{spacing}{0}
 	{
@@ -27,13 +35,19 @@
 		\pagestyle{empty}
 		\tableofcontents
 		\thispagestyle{empty}
+		{
+		\pagestyle{empty}
+		\include{typography}
+	}
 	}
 	\end{spacing}
 
-	{
-		\pagestyle{empty}
-		\include{preface}
-	}
+	\include{preface}
+	\include{typography}
+
+	\setcounter{section}{0}
+	\renewcommand*{\theHsection}{body\the\value{section}}
+
 
 	\pagestyle{fancy}
 	\pagenumbering{arabic}
@@ -56,7 +70,7 @@
 	\include{chapters/timesync}
 	\include{chapters/messaging}
 
-	\printbibliography
+	\printbibliography[heading=bibintoc]
 
 	\printindex
 \end{CJK}

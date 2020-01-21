@@ -1,8 +1,9 @@
 \section{Transactions}
 \label{sec:transactions}
 
-\nemquote{
-}{}
+\nemquote{%
+In fact, a large part of what we think of as economic activity is designed to accomplish what high transaction costs would otherwise prevent or to reduce transaction costs so that individuals can negotiate freely and we can take advantage of that diffused knowledge of which Friedrich Hayek has told us.
+}{Ronald Coase}
 
 \nemchapterfirstletter{T}{ransactions} are instructions that modify the global chain state.
 They are processed atomically and grouped into blocks.
@@ -34,7 +35,7 @@ $$\mathfunc{verify}(\structField{T}{Signature}, \structField{T}{SignerPublicKey}
 Since these bytes are meaningless, they can be stripped without invalidating any cryptographic guarantees.
 
 Binary layouts for all transaction types are specified in \codename's open source schema language
-\footnote{Schemas can be found at https://github.com/nemtech/catbuffer}.
+\footnote{Schemas can be found at https://github.com/nemtech/catbuffer.}.
 Please refer to the published schemas for the most up to date specifications.
 
 \begin{figure}[H]
@@ -56,13 +57,9 @@ Please refer to the published schemas for the most up to date specifications.
 				\begin{leftwordgroup}{\texttt{0x6C}}
 					\bitbox[br]{4}{} \bitbox{4}{V, N, T}
 				\end{leftwordgroup} \\
-				\begin{leftwordgroup}{\texttt{0x70}}
-					\wordbox{1}{MaxFee}
-				\end{leftwordgroup} \\
-				\begin{leftwordgroup}{\texttt{0x78}}
-					\wordbox{1}{Deadline}
-				\end{leftwordgroup} \\
-				\nemmemorymultiwordboxskipped{0x80}{Payload}{} \\
+				\nemmemorysinglewordbox{0x70}{MaxFee} \\
+				\nemmemorysinglewordbox{0x78}{Deadline} \\
+				\nemmemorymultiwordboxskipped{0x80}{Payload}{}
 			}{Verifiable data}
 		\end{subfigure}
 	}{Basic transaction binary layout}
@@ -110,15 +107,9 @@ None of the unverifiable footer fields need to be verified.
 				\begin{leftwordgroup}{\texttt{0x6C}}
 					\bitbox[br]{4}{} \bitbox{4}{V, N, T}
 				\end{leftwordgroup} \\
-				\begin{leftwordgroup}{\texttt{0x70}}
-					\wordbox{1}{MaxFee}
-				\end{leftwordgroup} \\
-				\begin{leftwordgroup}{\texttt{0x78}}
-					\wordbox{1}{Deadline}
-				\end{leftwordgroup} \\
-				\begin{leftwordgroup}{\texttt{0x80}}
-					\wordbox{1}{TransactionsHash}
-				\end{leftwordgroup}
+				\nemmemorysinglewordbox{0x70}{MaxFee} \\
+				\nemmemorysinglewordbox{0x78}{Deadline} \\
+				\nemmemorysinglewordbox{0x80}{TransactionsHash}
 			}{Verifiable data}
 		\end{subfigure}%
 		\begin{subfigure}{.33\textwidth}
@@ -193,7 +184,7 @@ $$\mathfunc{verify}(\structField{A}{Signature}, \structField{A}{SignerPublicKey}
 
 Additionally, all cosignatures must pass signature verification.
 Notice that cosigners sign the hash of an aggregate transaction data, not the data directly.
-$$\sum_{0\leq i \leq N_C} \mathfunc{verify}(\structField{C}{Signature}, \structField{C}{SignerPublicKey}, H(\mathfunc{VerifiableDataBuffer}(A)))$$
+$$\sum_{0\leq i \leq N_C} \mathfunc{verify}(\structField{C}{Signature}, \structField{C}{SignerPublicKey}, \hf(\mathfunc{VerifiableDataBuffer}(A)))$$
 
 Finally, there must be a cosignature that corresponds to and satisfies each embedded transaction signer.
 
@@ -211,14 +202,26 @@ The padding bytes are never signed nor included in any hashes.
 				\bitbox{4}{\tiny PayloadSize} \bitbox{4}{Reserved}
 			\end{leftwordgroup} \\
 			\nemmemorymultiwordboxskipped{}{Embedded}{Transaction 1} \\
-			\begin{leftwordgroup}{}
-				\wordbox{1}{\emph{optional} padding}
-			\end{leftwordgroup} \\
+			\nemmemorysinglewordbox{}{\emph{optional} padding} \\
 			\nemmemorymultiwordboxskipped{}{Embedded}{Transaction 2} \\
-			\begin{leftwordgroup}{}
-				\wordbox{1}{\emph{optional} padding}
-			\end{leftwordgroup} \\
+			\nemmemorysinglewordbox{}{\emph{optional} padding} \\
 			\nemmemorymultiwordboxskipped{}{Cosignatures}{}
 		}{Aggregate transaction footer with padding}
 	}
 \end{figure}
+
+\subsection{Transaction Hashes}
+
+Each transaction has two associated hashes - an \emph{entity hash} and a \emph{merkle component hash}.
+The former uniquely identifies a transaction and is used to prevent multiple confirmations of the same transaction.
+The latter is more specific and is used when calculating \field{TransactionsHash} \nemrefparens{sec:transactions:aggregate}.
+
+A transaction's entity hash is always calculated as the hash of its verifiable data.
+All confirmed transactions must have a unique entity hash.
+An aggregate transaction's entity hash is independent of its cosignatures.
+This prevents the same aggregate transaction from being confirmed multiple times with different sets of valid cosignatures.
+
+A regular transaction's merkle component hash is identical to its entity hash.
+An aggregate transaction's merkle component hash is calculated by hashing its entity hash concatenated with all the public keys of its cosignatures
+\footnote{Cosignature signatures are not included because they can only have a single value given a specific public key and payload.}.
+This ensures that \field{TransactionsHash} reflects all cosignatures that allowed the confirmation of an aggregate transaction.

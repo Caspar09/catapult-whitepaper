@@ -8,13 +8,18 @@
 \codenamespace在网络级别和单个节点级别都支持高度的自定义。
 \nemsetting {network} {network}中指定的网络范围设置对于网络中的所有节点必须相同。
 \nemsetting {node} {node}中指定的特定于节点的设置在同一网络中的各个节点之间可能会有所不同。
+\codenamespace was designed to use a \emph{plugin / extension} approach instead of supporting Turing complete smart contracts.
+While the latter can allow for more user flexibility, it's also more error prone from the user perspective.
+A plugin model limits the operations that can be performed on a blockchain and consequently has a smaller attack surface.
+Additionally, it's much simplier to optimize the performance of a discrete set of operations than an infinite set.
+This helps \codenamespace achieve the high throughput for which it was designed.
 
 \subsection{事务插件}
 
 
 网络中的所有节点必须支持相同类型的事务，并以完全相同的方式处理它们，以便所有节点可以就全局区块链状态达成共识。
-网络事务由一组网络需要每个节点都需要加载的\textit{事务插件} 来支持。
-这个（事务插件）组是由存在\nemsetting{network}{plugin*}配置部分。
+网络事务由一组网络需要每个节点都需要加载的\emph{transaction plugins}\index{plugins}来支持。
+这个（事务插件）组是由存在\nemsetting{network}{network} 配置部分。
 这些插件的任何更改，添加或删除必须由所有网络节点协调并接受。
 如果仅节点的部分子集同意这些修改，则这些节点将在分叉上。
 \codenamespace所有内置的事务都使用此插件模型构建，以验证其可扩展性。
@@ -64,7 +69,7 @@ void RegisterSubsystem(
 允许网络内的各个节点支持功能的异构混合。
 例如，某些节点可能希望将数据存储在数据库中或将事件发布到消息队列。
 这些功能都是可选的，因为它们都不影响共识。
-此类功能由节点加载的\textit{extensions}集确定，如\nemsetting{extensions-\{process\}}{extensions}中指定的那样。
+此类功能由节点加载的\emph{extensions}集确定，如\nemsetting{extensions-\{process\}}{extensions}中指定的那样。
 大多数内置\codenamespace功能是使用此扩展模型构建的，以验证其可扩展性。
 
 扩展是一个单独的动态链接库，它以以下形式开放单个接口
@@ -102,7 +107,7 @@ void RegisterExtension(
 例如，分机可以注册自定义网络时间源。
 实际上，有一个专门的扩展程序可以根据\nemref{sec:timesync}中描述的算法建立时间源。
 这是此扩展模型允许的高级别定制的一个示例。
-要了解扩展所允许的全部扩展性，请参阅项目代码或开发人员文档。
+要了解扩展所允许的全部扩展性，请参阅项目代码或开发人员文档。\nemtechdocsfootnote{}.
 
 \subsection{服务器}
 
